@@ -8,10 +8,10 @@
         <el-container>
             <el-main>
                 <div class="image">
-                    <el-image class="image" :src="src" fit="scale-down"></el-image>
+                    <el-image class="image" :src="'data:image/png;base64,'+src" fit="scale-down"></el-image>
                 </div>
                 <hr style="color: gainsboro" />
-                <upload class="upload"></upload>
+                <upload class="upload" :img.sync="src"></upload>
             </el-main>
         </el-container>
     </el-container>
@@ -27,7 +27,7 @@
         },
         data() {
             return {
-                src: 'https://cube.elemecdn.com/6/94/4d3ea53c084bad6931a56d5158a48jpeg.jpeg'
+                src: 'https://cube.elemecdn.com/6/94/4d3ea53c084bad6931a56d5158a48jpeg.jpeg',
             }
         }
     }
@@ -44,8 +44,8 @@
     }
 
     .image {
-        width: 2048px;
-        height: 1024px;
+        width: 1024px;
+        height: 512px;
         margin: 0 auto;
     }
 
