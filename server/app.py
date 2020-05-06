@@ -1,67 +1,52 @@
+import argparse
 import io
-import json
-import torch
-from torchvision import models
-import torchvision.transforms as transforms
+import os
+import shutil
+
 from PIL import Image
-import base64
-from flask import Flask, jsonify, request
+from flask import Flask, request
 from flask_cors import *
 
+from model import predict as get_prediction
 
+# app settings
 app = Flask(__name__)
 CORS(app, supports_credentials=True)
 
-model = torch.hub.load('pytorch/vision:v0.5.0', 'deeplabv3_resnet101', pretrained=True)
-model.eval()
-
-# create a color pallette, selecting a color for each class
-palette = torch.tensor([2 ** 25 - 1, 2 ** 15 - 1, 2 ** 21 - 1])
-colors = torch.as_tensor([i for i in range(21)])[:, None] * palette
-colors = (colors % 255).numpy().astype("uint8")
-
-def transform_image(image):
-    my_transforms = transforms.Compose([
-                        transforms.ToTensor(),
-                        transforms.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225]),
-                    ])
-    return my_transforms(image).unsqueeze(0)
+# args
+parser = argparse.ArgumentParser(description="Panoptic testing script")
+parser.add_argument("--model", type=str, default="./model/weight/model_best.pth.tar", help="Path to model weight file")
+parser.add_argument("--data", type=str, default="./inputs", help="Path to input data")
+args = parser.parse_args()
 
 
-def get_prediction(image_bytes):
-    # read image from bytes
-    input_image = Image.open(io.BytesIO(image_bytes))
-
-    # transform
-    input_batch = transform_image(input_image)
-    if torch.cuda.is_available():
-        input_batch = input_batch.to('cuda')
-        model.to('cuda')
-    with torch.no_grad():
-        output = model(input_batch)['out'][0]
-    output_predictions = output.argmax(0)
-
-    # plot the semantic segmentation predictions of 21 classes in each color
-    img = Image.fromarray(output_predictions.byte().cpu().numpy()).resize(input_image.size)
-    img.putpalette(colors)
-
-    # create file-object in memory
-    file_object = io.BytesIO()
-
-    # write PNG in file-object
-    img.save(file_object, 'PNG')
-
-    # convert bytes to base64
-    return base64.b64encode(file_object.getvalue()).decode()
+def set_dir(filepath):
+    """
+    Create a folder if the given path does not exist.
+    Otherwise remove and recreate the folder.
+    :param filepath: path
+    :return:
+    """
+    if not os.path.exists(filepath):
+        os.mkdir(filepath)
+    else:
+        shutil.rmtree(filepath)
+        os.mkdir(filepath)
 
 
 @app.route('/predict', methods=['POST'])
 def predict():
     if request.method == 'POST':
+        # open and save the uploaded image
         file = request.files['file']
         img_bytes = file.read()
-        return get_prediction(image_bytes=img_bytes)
+        input_image = Image.open(io.BytesIO(img_bytes))
+        set_dir(args.data)
+        input_image.save(os.path.join(args.data, "input.png"))
+
+        return get_prediction(args)
 
 
 if __name__ == '__main__':
+    set_dir(args.data)
     app.run()

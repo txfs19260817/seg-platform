@@ -8,10 +8,17 @@
         <el-container>
             <el-main>
                 <div class="image">
-                    <el-image class="image" :src="'data:image/png;base64,'+src" fit="scale-down"></el-image>
+                    <el-image class="image"
+                              :src="'data:image/png;base64,'+src"
+                              fit="scale-down"
+                              :preview-src-list="srcList">
+                        <div slot="error" class="el-image__error">
+                            <i class="el-icon-picture-outline"></i>
+                        </div>
+                    </el-image>
+                    <img class="colorbar" src="../../public/colorbar.png" alt="colorbar"/>
+                    <upload class="upload" :img.sync="src"></upload>
                 </div>
-                <hr style="color: gainsboro" />
-                <upload class="upload" :img.sync="src"></upload>
             </el-main>
         </el-container>
     </el-container>
@@ -27,7 +34,12 @@
         },
         data() {
             return {
-                src: 'https://cube.elemecdn.com/6/94/4d3ea53c084bad6931a56d5158a48jpeg.jpeg',
+                src: '',
+            }
+        },
+        computed: {
+            srcList() {
+                return ['data:image/png;base64,' + this.src]
             }
         }
     }
@@ -49,6 +61,10 @@
         margin: 0 auto;
     }
 
+    .colorbar {
+        
+    }
+
     .el-header, .el-footer {
         background-color: #B3C0D1;
         color: #333;
@@ -62,6 +78,7 @@
     .el-main {
         background-color: #E9EEF3;
         color: #333;
+        display: flex;
     }
 
     .upload {

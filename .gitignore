@@ -1,6 +1,8 @@
 .DS_Store
 node_modules
+example_inputs
 /dist
+weight
 
 # local env files
 .env.local

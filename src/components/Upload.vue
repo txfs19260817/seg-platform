@@ -15,7 +15,7 @@
                 :file-list="fileList"
         >
             <i class="el-icon-plus"></i>
-            <div slot="tip" class="el-upload__tip">只能上传jpg/png文件，且不超过2mb</div>
+            <div slot="tip" class="el-upload__tip">只能上传jpg/png文件，且不超过3mb</div>
         </el-upload>
         <el-dialog :visible.sync="dialogVisible">
             <img width="100%" :src="dialogImageUrl" alt="Uploaded Image">
@@ -32,6 +32,8 @@
                 // Preview dialog
                 dialogImageUrl: '',
                 dialogVisible: false,
+                // loading
+                load: null,
             };
         },
         methods: {
@@ -40,16 +42,25 @@
             },
             handleBeforeUpload(file) {
                 let test = /^image\/(jpeg|png|jpg)$/.test(file.type);
-                const isLt2M = file.size / 1024 / 1024 < 2;
+                const isLt3M = file.size / 1024 / 1024 < 3;
                 if (!test) {
                     this.$message.error('上传图片格式有误，支持格式：png, jpg, jpeg');
                     return false
                 }
-                if (!isLt2M) {
-                    this.$message.error('上传图片大小不能超过 2MB');
+                if (!isLt3M) {
+                    this.$message.error('上传图片大小不能超过 3MB');
                     return false
                 }
-                return test && isLt2M
+
+                // Loading
+                this.load = this.$loading({
+                    lock: true,
+                    text: 'Loading... Please wait patiently. ',
+                    spinner: 'el-icon-loading',
+                    background: 'rgba(0, 0, 0, 0.5)'
+                });
+
+                return test && isLt3M
             },
             handleRemove(file, fileList) {
                 console.log(file, fileList);
@@ -62,7 +73,7 @@
                 this.$message.error(`请删除后重新添加图片`);
             },
             handleSuccess(response, file, fileList) {
-                console.log(response);
+                this.load.close();
                 this.$emit('update:img', response)
             },
         }
