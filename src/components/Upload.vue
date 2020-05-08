@@ -3,6 +3,7 @@
         <el-upload
                 class="upload-demo"
                 ref="upload"
+                :data="segType"
                 list-type="picture-card"
                 accept="image/jpeg,image/jpg,image/png"
                 :limit="1"
@@ -26,6 +27,14 @@
 <script>
     export default {
         name: "Upload",
+        props: {
+            segType: {
+                type: Object,
+                default() {
+                    return {type: 'isaid'}
+                },
+            }
+        },
         data() {
             return {
                 fileList: [],
@@ -43,10 +52,12 @@
             handleBeforeUpload(file) {
                 let test = /^image\/(jpeg|png|jpg)$/.test(file.type);
                 const isLt3M = file.size / 1024 / 1024 < 3;
+                // check format
                 if (!test) {
                     this.$message.error('上传图片格式有误，支持格式：png, jpg, jpeg');
                     return false
                 }
+                // check size
                 if (!isLt3M) {
                     this.$message.error('上传图片大小不能超过 3MB');
                     return false

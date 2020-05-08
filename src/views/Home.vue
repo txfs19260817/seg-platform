@@ -8,6 +8,8 @@
         <el-container>
             <el-main>
                 <div class="image">
+                    <h1 v-if="segTypeStr === 'isaid'">当前图像分割场景模式：遥感分割</h1>
+                    <h1 v-if="segTypeStr === 'vista'">当前图像分割场景模式：街景分割</h1>
                     <el-image class="image"
                               :src="'data:image/png;base64,'+src"
                               fit="scale-down"
@@ -16,8 +18,23 @@
                             <i class="el-icon-picture-outline"></i>
                         </div>
                     </el-image>
-                    <img class="colorbar" src="../../public/colorbar.png" alt="colorbar"/>
-                    <upload class="upload" :img.sync="src"></upload>
+                    <img v-if="segTypeStr === 'isaid'" class="colorbar" src="../../public/colorbar.png" alt="colorbar"/>
+                    <img v-if="segTypeStr === 'vista'" class="colorbar" src="../../public/colorbar_vistas.jpg" alt="colorbar"/>
+                    <div>
+                        <el-tooltip content="切换图像分割场景" placement="top">
+                            <el-switch
+                                    v-model="segTypeStr"
+                                    active-color="#13CE66"
+                                    inactive-color="#409EFF"
+                                    active-value="vista"
+                                    inactive-value="isaid"
+                                    active-text="街景分割"
+                                    inactive-text="遥感分割"
+                                    @change="changeSegType">
+                            </el-switch>
+                        </el-tooltip>
+                        <upload class="upload" :img.sync="src" :seg-type.sync="segType"></upload>
+                    </div>
                 </div>
             </el-main>
         </el-container>
@@ -34,8 +51,17 @@
         },
         data() {
             return {
+                // image src
                 src: '',
+                // seg task type
+                segTypeStr: 'isaid',
+                segType: {type: 'isaid'},
             }
+        },
+        methods: {
+            changeSegType(v) {
+                this.segType.type = v
+            },
         },
         computed: {
             srcList() {
@@ -62,7 +88,8 @@
     }
 
     .colorbar {
-        
+        width: 1024px;
+        margin: 0 auto;
     }
 
     .el-header, .el-footer {

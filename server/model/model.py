@@ -1,5 +1,6 @@
 """
-Evaluation script supports using single GPU and returns the prediction
+Evaluation script supports using single GPU and returns the prediction.
+Please set 'normalization_mode = bn' in config file before use it.
 """
 
 import base64
@@ -255,36 +256,40 @@ def save_prediction_image(_, panoptic_pred, img_info, colors, num_stuff):
     return base64.b64encode(file_object.getvalue()).decode()
 
 
-# Load configuration
-device = 0
-conf_path = "./model/weight/iSAID_r50.ini"
-meta_path = "./model/weight/metadata.bin"
-configuration = make_config(conf_path)
-meta = load_meta(meta_path)
-
-# Create model
-model = make_model(configuration, meta["num_thing"], meta["num_stuff"])
-
-# Init GPU stuff
-torch.backends.cudnn.benchmark = configuration["general"].getboolean("cudnn_benchmark")
-model = model.cuda(device)
-
-# Panoptic processing parameters
-panoptic_preprocessing = PanopticPreprocessing(0.5, 0.5, 4096)
-
-# palette for color maps
-palette = []
-for i in range(256):
-    if i < len(meta["palette"]):
-        palette.append(meta["palette"][i])
-    else:
-        palette.append((0, 0, 0))
-palette = np.array(palette, dtype=np.uint8)
-
-save_function = partial(save_prediction_image, colors=palette, num_stuff=meta["num_stuff"])
-
-
 def predict(args):
+    """
+    Prediction function.
+    :param args: args
+    :return: base64 png
+    """
+    # Load configurations
+    device = 0
+    conf_path = args.config
+    meta_path = args.meta
+    configuration = make_config(conf_path)
+    meta = load_meta(meta_path)
+
+    # Create model
+    model = make_model(configuration, meta["num_thing"], meta["num_stuff"])
+
+    # Init GPU stuff
+    torch.backends.cudnn.benchmark = configuration["general"].getboolean("cudnn_benchmark")
+    model = model.cuda(device)
+
+    # Panoptic processing parameters
+    panoptic_preprocessing = PanopticPreprocessing(0.5, 0.5, 4096)
+
+    # palette for color maps
+    palette = []
+    for i in range(256):
+        if i < len(meta["palette"]):
+            palette.append(meta["palette"][i])
+        else:
+            palette.append((0, 0, 0))
+    palette = np.array(palette, dtype=np.uint8)
+
+    save_function = partial(save_prediction_image, colors=palette, num_stuff=meta["num_stuff"])
+
     # Load snapshot
     print("Loading snapshot from " + args.model)
     resume_from_snapshot(model, args.model, ["body", "rpn_head", "roi_head", "sem_head"])
