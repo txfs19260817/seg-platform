@@ -3,21 +3,20 @@
         <el-upload
                 class="upload-demo"
                 ref="upload"
-                :data="segType"
                 list-type="picture-card"
                 accept="image/jpeg,image/jpg,image/png"
                 :limit="1"
-                action="http://localhost:5000/predict"
+                :action="addr"
                 :before-upload="handleBeforeUpload"
                 :on-preview="handlePreview"
                 :on-remove="handleRemove"
                 :on-exceed="handleExceed"
                 :on-success="handleSuccess"
-                :file-list="fileList"
-        >
+                :file-list="fileList">
             <i class="el-icon-plus"></i>
             <div slot="tip" class="el-upload__tip">只能上传jpg/png文件，且不超过3mb</div>
         </el-upload>
+<!--        image preview-->
         <el-dialog :visible.sync="dialogVisible">
             <img width="100%" :src="dialogImageUrl" alt="Uploaded Image">
         </el-dialog>
@@ -29,10 +28,8 @@
         name: "Upload",
         props: {
             segType: {
-                type: Object,
-                default() {
-                    return {type: 'isaid'}
-                },
+                type: String,
+                default: 'isaid'
             }
         },
         data() {
@@ -84,9 +81,15 @@
                 this.$message.error(`请删除后重新添加图片`);
             },
             handleSuccess(response, file, fileList) {
+
                 this.load.close();
                 this.$emit('update:img', response)
             },
+        },
+        computed:{
+            addr(){
+                return "http://localhost:5000/predict?type="+this.segType+"&multiple=0"
+            }
         }
     }
 </script>

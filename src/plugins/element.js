@@ -7,6 +7,7 @@ import {
     Container,
     Main,
     Header,
+    Aside,
     Upload,
     Tooltip,
     Switch,
@@ -21,6 +22,7 @@ Vue.use(Button);
 Vue.use(Container);
 Vue.use(Main);
 Vue.use(Header);
+Vue.use(Aside);
 Vue.use(Upload);
 Vue.use(Tooltip);
 Vue.use(Switch);

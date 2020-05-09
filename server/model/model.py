@@ -5,6 +5,7 @@ Please set 'normalization_mode = bn' in config file before use it.
 
 import base64
 import io
+import os
 import time
 from collections import OrderedDict
 from functools import partial
@@ -35,6 +36,7 @@ from seamseg.utils.meters import AverageMeter
 from seamseg.utils.misc import config_to_string, norm_act_from_config
 from seamseg.utils.panoptic import PanopticPreprocessing
 from seamseg.utils.snapshot import resume_from_snapshot
+from utils import ensure_dir, zip_file
 
 
 def make_config(config_path):
@@ -159,6 +161,7 @@ def make_model(config, num_thing, num_stuff):
 
 
 def test(model, dataloader, **varargs):
+    multiple = False
     model.eval()
     dataloader.batch_sampler.set_epoch(0)
 
@@ -199,7 +202,7 @@ def test(model, dataloader, **varargs):
 
                 # Save prediction
                 raw_pred = (sem_pred, bbx_pred, cls_pred, obj_pred, msk_pred)
-                prediction = test_save_function(raw_pred, panoptic_pred, img_info)
+                multiple, prediction = test_save_function(raw_pred, panoptic_pred, img_info)
 
             # Log batch
             if varargs["summary"] is not None and (it + 1) % varargs["log_interval"] == 0:
@@ -213,11 +216,12 @@ def test(model, dataloader, **varargs):
                 )
 
             data_time = time.time()
-
+    if multiple:
+        zip_file(prediction)
     return prediction
 
 
-def save_prediction_image(_, panoptic_pred, img_info, colors, num_stuff):
+def save_prediction_image(_, panoptic_pred, img_info, out_dir, colors, num_stuff, multiple=False):
     msk, cat, obj, iscrowd = panoptic_pred
 
     img = Image.open(img_info["abs_path"])
@@ -246,6 +250,16 @@ def save_prediction_image(_, panoptic_pred, img_info, colors, num_stuff):
     out = Image.blend(img, sem_img, 0.5).convert(mode="RGBA")
     out = Image.alpha_composite(out, contours_img)
 
+    if multiple:
+        # Prepare folders and paths
+        folder, img_name = os.path.split(img_info["rel_path"])
+        img_name, _ = os.path.splitext(img_name)
+        out_dir = os.path.join(out_dir, folder)
+        ensure_dir(out_dir)
+        out_path = os.path.join(out_dir, img_name + ".png")
+        out.convert(mode="RGB").save(out_path)
+        return True, out_dir
+
     # create file-object in memory
     file_object = io.BytesIO()
 
@@ -253,12 +267,13 @@ def save_prediction_image(_, panoptic_pred, img_info, colors, num_stuff):
     out.convert(mode="RGB").save(file_object, 'PNG')
 
     # convert bytes to base64
-    return base64.b64encode(file_object.getvalue()).decode()
+    return False, base64.b64encode(file_object.getvalue()).decode()
 
 
-def predict(args):
+def predict(args, multiple=False):
     """
     Prediction function.
+    :param multiple: whether inference multiple images
     :param args: args
     :return: base64 png
     """
@@ -288,7 +303,8 @@ def predict(args):
             palette.append((0, 0, 0))
     palette = np.array(palette, dtype=np.uint8)
 
-    save_function = partial(save_prediction_image, colors=palette, num_stuff=meta["num_stuff"])
+    save_function = partial(save_prediction_image, out_dir=args.output, colors=palette, num_stuff=meta["num_stuff"],
+                            multiple=multiple)
 
     # Load snapshot
     print("Loading snapshot from " + args.model)
