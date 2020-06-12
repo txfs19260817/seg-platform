@@ -1,5 +1,6 @@
 # seg-platform
-Panoptic segmentation web platform.
+A panoptic segmentation web platform.
+![Page](https://github.com/txfs19260817/seg-platform/blob/master/docs/1.png)
 
 ## Features
 - RESTful API backend written in Flask, Python
