@@ -41,7 +41,7 @@
                               :preview-src-list="srcList">
                         <div slot="error" class="el-image__error">
                             <i v-if="!multiple" class="el-icon-picture-outline"></i>
-                            <span v-else>批量上传图像数据模式下，模型预测完毕后会自动开始下载处理后图像的压缩文件。</span>
+                            <span v-else>批量上传图像数据模式下，方便用户对照查看，</span>
                         </div>
                     </el-image>
                     <h3>上传图像数据</h3>

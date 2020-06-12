@@ -3,6 +3,7 @@ node_modules
 example_inputs
 /dist
 weight
+/server/model/weight
 
 # local env files
 .env.local
