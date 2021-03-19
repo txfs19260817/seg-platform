@@ -1,7 +1,7 @@
 torchvision==0.3.0
 flask==1.1.2
 flask-cors
-pillow==6.2.2
+pillow==8.1.1
 numpy==1.17.0
 umsgpack==0.1.0
 seamseg==0.1.dev31+g18e28cc.d20200405
